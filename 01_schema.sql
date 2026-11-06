@@ -4,6 +4,9 @@
 -- ADVERTENCIA: borra las tablas existentes y sus datos. Úsalo solo en desarrollo.
 -- =====================================================================
 
+-- Los textos de este archivo están en UTF-8 (tildes y ñ)
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS clinica_nova_salud
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
@@ -11,6 +14,7 @@ CREATE DATABASE IF NOT EXISTS clinica_nova_salud
 USE clinica_nova_salud;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS tokens_restablecimiento;
 DROP TABLE IF EXISTS bitacora_expedientes;
 DROP TABLE IF EXISTS receta_detalle;
 DROP TABLE IF EXISTS recetas;
@@ -45,6 +49,20 @@ CREATE TABLE usuarios (
   creado_en          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_usuarios_rol FOREIGN KEY (rol_id) REFERENCES roles(id)
+) ENGINE=InnoDB;
+
+-- Tokens de un solo uso para recuperar el acceso (expiran en 30 minutos).
+CREATE TABLE tokens_restablecimiento (
+  id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  usuario_id  INT UNSIGNED NOT NULL,
+  token_hash  CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,
+  vence_en    DATETIME NOT NULL,
+  usado_en    DATETIME NULL,
+  creado_en   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tokens_restablecimiento_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  INDEX idx_tokens_restablecimiento_usuario (usuario_id),
+  INDEX idx_tokens_restablecimiento_vence (vence_en)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
